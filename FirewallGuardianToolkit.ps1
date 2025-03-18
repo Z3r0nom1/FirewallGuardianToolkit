@@ -43,12 +43,6 @@
 
     --- License ---
     This script is provided "as-is" without warranty of any kind.
-
-    --- Contact ---
-    For issues or contributions, feel free to reach out via GitHub.
-
-    --- Signed by ---
-    Ignacio Fontan
 #>
 
 
