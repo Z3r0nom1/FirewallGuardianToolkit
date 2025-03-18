@@ -271,7 +271,7 @@ function DisplayMenu {
             }
             "6" {
                 Write-Output "Exiting the script. Goodbye!"
-                break
+                exit
             }
             default {
                 Write-Output "Invalid choice. Please try again."
