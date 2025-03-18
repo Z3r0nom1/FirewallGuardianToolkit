@@ -53,10 +53,6 @@
 
 
 function Set-FirewallLogFolder {
-    param (
-        [string]$Profile
-    )
-
     # Define the folder path based on the profile
     $folderPath = "$env:SystemRoot\System32\LogFiles\Firewall"
 
@@ -260,8 +256,7 @@ function DisplayMenu {
 
         switch ($choice) {
             "1" {
-                $profile = Read-Host "Enter the profile (Domain, Private, Public)"
-                Set-FirewallLogFolder -Profile $profile
+                Set-FirewallLogFolder
             }
             "2" {
                 $profile = Read-Host "Enter the profile (Domain, Private, Public)"
