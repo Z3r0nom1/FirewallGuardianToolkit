@@ -30,7 +30,7 @@
     1. Run the script with administrative privileges.
     2. When executed, a menu will be displayed for selecting the desired operation.
     3. Follow the prompts to provide required inputs like profile name, time range, or source IP.
-    4. Ensure log files for each profile (domain.log, private.log, public.log) 
+    4. Ensure log files for each profile (domainfw.log, privatefw.log, publicfw.log) 
        are properly configured in Windows Firewall settings.
 
     --- Requirements ---
@@ -43,10 +43,17 @@
 
     --- License ---
     This script is provided "as-is" without warranty of any kind.
+
+    --- Contact ---
+    For issues or contributions, feel free to reach out via GitHub.
+
+    --- Signed by ---
+    Ignacio Fontan
 #>
 
 
 function Set-FirewallLogFolder {
+    
     # Define the folder path based on the profile
     $folderPath = "$env:SystemRoot\System32\LogFiles\Firewall"
 
@@ -86,14 +93,15 @@ function Get-FirewallDrops {
         [int]$Minutes
     )
 
-    # Calculate the start time
-    $startTime = (Get-Date).AddMinutes(-$Minutes)
+    # Calculate the start time and end time for the time range
+    $endTime = Get-Date
+    $startTime = $endTime.AddMinutes(-$Minutes)
 
-    # Read the log file based on the profile
+    # Determine the log file path based on the profile
     $logFile = switch ($Profile) {
-        "Domain" { "$env:SystemRoot\System32\LogFiles\Firewall\domain.log" }
-        "Private" { "$env:SystemRoot\System32\LogFiles\Firewall\private.log" }
-        "Public" { "$env:SystemRoot\System32\LogFiles\Firewall\public.log" }
+        "Domain" { "$env:SystemRoot\System32\LogFiles\Firewall\domainfw.log" }
+        "Private" { "$env:SystemRoot\System32\LogFiles\Firewall\privatefw.log" }
+        "Public" { "$env:SystemRoot\System32\LogFiles\Firewall\publicfw.log" }
         default { 
             Write-Output "Invalid profile specified. Please use Domain, Private, or Public."
             return
@@ -106,14 +114,20 @@ function Get-FirewallDrops {
     }
 
     # Filter for dropped packets in the given time range
-    Get-Content -Path $logFile | ForEach-Object {
-        $fields = $_ -split ' '
-        $timestamp = Get-Date ($fields[0] + ' ' + $fields[1]) -ErrorAction SilentlyContinue
-        if ($timestamp -ge $startTime -and $_ -match 'DROP') {
-            $_
+    Get-Content -Path $logFile | Where-Object { $_ -notmatch '^#' } | ForEach-Object {
+        $fields = $_ -split '\s+'
+        try {
+            $timestamp = Get-Date ($fields[0] + ' ' + $fields[1]) -ErrorAction Stop
+            # Verify if the log entry falls within the specified time range
+            if ($timestamp -ge $startTime -and $timestamp -le $endTime -and $_ -match 'DROP') {
+                $_
+            }
+        } catch {
+            # Ignore lines with invalid timestamp formatting
         }
     }
 }
+
 
 function Get-FirewallAllow {
     param (
@@ -121,14 +135,15 @@ function Get-FirewallAllow {
         [int]$Minutes
     )
 
-    # Calculate the start time
-    $startTime = (Get-Date).AddMinutes(-$Minutes)
+    # Calculate the start time and end time for the time range
+    $endTime = Get-Date
+    $startTime = $endTime.AddMinutes(-$Minutes)
 
-    # Read the log file based on the profile
+    # Determine the log file path based on the profile
     $logFile = switch ($Profile) {
-        "Domain" { "$env:SystemRoot\System32\LogFiles\Firewall\domain.log" }
-        "Private" { "$env:SystemRoot\System32\LogFiles\Firewall\private.log" }
-        "Public" { "$env:SystemRoot\System32\LogFiles\Firewall\public.log" }
+        "Domain" { "$env:SystemRoot\System32\LogFiles\Firewall\domainfw.log" }
+        "Private" { "$env:SystemRoot\System32\LogFiles\Firewall\privatefw.log" }
+        "Public" { "$env:SystemRoot\System32\LogFiles\Firewall\publicfw.log" }
         default { 
             Write-Output "Invalid profile specified. Please use Domain, Private, or Public."
             return
@@ -141,14 +156,21 @@ function Get-FirewallAllow {
     }
 
     # Filter for allowed packets in the given time range
-    Get-Content -Path $logFile | ForEach-Object {
-        $fields = $_ -split ' '
-        $timestamp = Get-Date ($fields[0] + ' ' + $fields[1]) -ErrorAction SilentlyContinue
-        if ($timestamp -ge $startTime -and $_ -match 'ALLOW') {
-            $_
+    Get-Content -Path $logFile | Where-Object { $_ -notmatch '^#' } | ForEach-Object {
+        $fields = $_ -split '\s+'
+        try {
+            $timestamp = Get-Date ($fields[0] + ' ' + $fields[1]) -ErrorAction Stop
+            # Verify if the log entry falls within the specified time range
+            if ($timestamp -ge $startTime -and $timestamp -le $endTime -and $_ -match 'ALLOW') {
+                $_
+            }
+        } catch {
+            # Ignore lines with invalid timestamp formatting
         }
     }
 }
+
+
 
 function Get-DeniedConnectionsForSourceIP {
     param (
@@ -158,11 +180,16 @@ function Get-DeniedConnectionsForSourceIP {
     # Ask user for the source IP
     $sourceIP = Read-Host "Enter the source IP to search for"
 
-    # Set the log file path based on the profile
+    if (-not $sourceIP) {
+        Write-Output "Source IP cannot be empty. Please provide a valid IP address."
+        return
+    }
+
+    # Determine the log file path based on the profile
     $logFile = switch ($Profile) {
-        "Domain" { "$env:SystemRoot\System32\LogFiles\Firewall\domain.log" }
-        "Private" { "$env:SystemRoot\System32\LogFiles\Firewall\private.log" }
-        "Public" { "$env:SystemRoot\System32\LogFiles\Firewall\public.log" }
+        "Domain" { "$env:SystemRoot\System32\LogFiles\Firewall\domainfw.log" }
+        "Private" { "$env:SystemRoot\System32\LogFiles\Firewall\privatefw.log" }
+        "Public" { "$env:SystemRoot\System32\LogFiles\Firewall\publicfw.log" }
         default { 
             Write-Output "Invalid profile specified. Please use Domain, Private, or Public."
             return
@@ -174,18 +201,21 @@ function Get-DeniedConnectionsForSourceIP {
         return
     }
 
-    # Search for denied connections for the source IP
-    Get-Content -Path $logFile | ForEach-Object {
-        $fields = $_ -split ' '
-        if ($fields.Length -ge 7 -and $fields[4] -eq $sourceIP -and $_ -match 'DROP') {
-            [PSCustomObject]@{
-                SourceIP = $fields[4]
-                DestinationPort = $fields[7]
-                TrafficType = $fields[3]
+    # Filter for denied connections from the specified source IP
+    Get-Content -Path $logFile | Where-Object { $_ -notmatch '^#' } | ForEach-Object {
+        $fields = $_ -split '\s+'
+        try {
+            # Check if the action is DROP and the source IP matches
+            if ($fields[2] -eq "DROP" -and $fields[4] -eq $sourceIP) {
+                $_
             }
+        } catch {
+            # Ignore errors from malformed or unexpected lines
         }
     }
 }
+
+
 
 function Export-FirewallLogsToCsv {
     # Ask user which profile to export
@@ -199,9 +229,9 @@ function Export-FirewallLogsToCsv {
 
     # Set the log file path
     $logFile = switch ($profile) {
-        "Domain" { "$env:SystemRoot\System32\LogFiles\Firewall\domain.log" }
-        "Private" { "$env:SystemRoot\System32\LogFiles\Firewall\private.log" }
-        "Public" { "$env:SystemRoot\System32\LogFiles\Firewall\public.log" }
+        "Domain" { "$env:SystemRoot\System32\LogFiles\Firewall\domainfw.log" }
+        "Private" { "$env:SystemRoot\System32\LogFiles\Firewall\privatefw.log" }
+        "Public" { "$env:SystemRoot\System32\LogFiles\Firewall\publicfw.log" }
     }
 
     if (-Not (Test-Path -Path $logFile)) {
