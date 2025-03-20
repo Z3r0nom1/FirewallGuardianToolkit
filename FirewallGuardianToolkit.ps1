@@ -99,9 +99,9 @@ function Get-FirewallDrops {
 
     # Determine the log file path based on the profile
     $logFile = switch ($Profile) {
-        "Domain" { "$env:SystemRoot\System32\LogFiles\Firewall\domainfw.log" }
-        "Private" { "$env:SystemRoot\System32\LogFiles\Firewall\privatefw.log" }
-        "Public" { "$env:SystemRoot\System32\LogFiles\Firewall\publicfw.log" }
+        "Domain" { "$env:SystemRoot\System32\LogFiles\Firewall\domain.log" }
+        "Private" { "$env:SystemRoot\System32\LogFiles\Firewall\private.log" }
+        "Public" { "$env:SystemRoot\System32\LogFiles\Firewall\public.log" }
         default { 
             Write-Output "Invalid profile specified. Please use Domain, Private, or Public."
             return
@@ -141,9 +141,9 @@ function Get-FirewallAllow {
 
     # Determine the log file path based on the profile
     $logFile = switch ($Profile) {
-        "Domain" { "$env:SystemRoot\System32\LogFiles\Firewall\domainfw.log" }
-        "Private" { "$env:SystemRoot\System32\LogFiles\Firewall\privatefw.log" }
-        "Public" { "$env:SystemRoot\System32\LogFiles\Firewall\publicfw.log" }
+        "Domain" { "$env:SystemRoot\System32\LogFiles\Firewall\domain.log" }
+        "Private" { "$env:SystemRoot\System32\LogFiles\Firewall\private.log" }
+        "Public" { "$env:SystemRoot\System32\LogFiles\Firewall\public.log" }
         default { 
             Write-Output "Invalid profile specified. Please use Domain, Private, or Public."
             return
@@ -187,9 +187,9 @@ function Get-DeniedConnectionsForSourceIP {
 
     # Determine the log file path based on the profile
     $logFile = switch ($Profile) {
-        "Domain" { "$env:SystemRoot\System32\LogFiles\Firewall\domainfw.log" }
-        "Private" { "$env:SystemRoot\System32\LogFiles\Firewall\privatefw.log" }
-        "Public" { "$env:SystemRoot\System32\LogFiles\Firewall\publicfw.log" }
+        "Domain" { "$env:SystemRoot\System32\LogFiles\Firewall\domain.log" }
+        "Private" { "$env:SystemRoot\System32\LogFiles\Firewall\private.log" }
+        "Public" { "$env:SystemRoot\System32\LogFiles\Firewall\public.log" }
         default { 
             Write-Output "Invalid profile specified. Please use Domain, Private, or Public."
             return
@@ -229,9 +229,9 @@ function Export-FirewallLogsToCsv {
 
     # Set the log file path
     $logFile = switch ($profile) {
-        "Domain" { "$env:SystemRoot\System32\LogFiles\Firewall\domainfw.log" }
-        "Private" { "$env:SystemRoot\System32\LogFiles\Firewall\privatefw.log" }
-        "Public" { "$env:SystemRoot\System32\LogFiles\Firewall\publicfw.log" }
+        "Domain" { "$env:SystemRoot\System32\LogFiles\Firewall\domain.log" }
+        "Private" { "$env:SystemRoot\System32\LogFiles\Firewall\private.log" }
+        "Public" { "$env:SystemRoot\System32\LogFiles\Firewall\public.log" }
     }
 
     if (-Not (Test-Path -Path $logFile)) {
